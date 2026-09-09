@@ -24,7 +24,11 @@ if ((Test-Path $Exe) -and -not $Force) {
 }
 
 Say "Checking the latest Vincymovie Windows build..."
-$release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/tags/$ReleaseTag" -Headers @{ "User-Agent" = "Vincymovie-Installer" }
+try {
+    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/tags/$ReleaseTag" -Headers @{ "User-Agent" = "Vincymovie-Installer" }
+} catch {
+    throw "The Vincymovie Windows release is not available yet. Please wait for the GitHub Actions Windows build to finish, then try again."
+}
 $asset = $release.assets | Where-Object { $_.name -eq "Vincymovie_Windows_x64.zip" } | Select-Object -First 1
 $hashAsset = $release.assets | Where-Object { $_.name -eq "Vincymovie_Windows_x64.sha256" } | Select-Object -First 1
 if (-not $asset) { throw "No Windows x64 release asset is available yet. Run the GitHub Actions Windows build first." }
