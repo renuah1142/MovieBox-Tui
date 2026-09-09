@@ -15,11 +15,11 @@ exclude = [
 ]
 version = "0.1.18"
 edition = "2024"
-description = "Terminal interface to find, download, and stream movies, TV shows, and live TV using local media players."
-repository = "https://github.com/mesamirh/MovieBox-Tui"
-homepage = "https://github.com/mesamirh/MovieBox-Tui"
+description = "Vincymovie desktop terminal client for finding movies, TV shows, and live TV using local media players."
+repository = "https://github.com/renuah1142/MovieBox-Tui"
+homepage = "https://github.com/renuah1142/MovieBox-Tui"
 license = "MIT OR Apache-2.0"
-keywords = ["tui", "moviebox", "streaming", "movies", "cli"]
+keywords = ["vincymovie", "tui", "movies", "tv", "multimedia"]
 categories = ["command-line-utilities", "multimedia"]
 readme = "README.md"
 rust-version = "1.90.0"
@@ -34,7 +34,6 @@ hmac = "0.13.0"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "webp"] }
 lru = "0.18.1"
 md-5 = "0.11.0"
-rand = "0.10.2"
 ratatui = "0.30.2"
 ratatui-image = { version = "11.0.6", default-features = false, features = ["crossterm"] }
 rustls = { version = "0.23.42", default-features = false, features = ["ring", "std"] }
@@ -62,6 +61,10 @@ tempfile = "3.17.1"
 [lib]
 name = "moviebox_tui"
 path = "src/lib.rs"
+
+[[bin]]
+name = "vincymovie"
+path = "src/main.rs"
 
 [lints.clippy]
 collapsible_else_if = "allow"
