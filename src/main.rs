@@ -6,7 +6,7 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 #[cfg(all(target_arch = "aarch64", target_os = "linux"))]
 core::arch::global_asm!(
-    ".section .tdata,\"awT\",@progbits",
+    ".section .tdata,\"aw\",@progbits",
     ".p2align 6",
     ".globl __bionic_tls_align_anchor",
     "__bionic_tls_align_anchor:",
@@ -23,6 +23,7 @@ core::arch::global_asm!(
 unsafe extern "C" {
     fn __bionic_tls_align_reference();
 }
+
 struct TerminalGuard;
 
 fn restore_terminal() {
@@ -43,7 +44,7 @@ fn purge_stale_subtitles() {
         let max_age = 24 * 60 * 60;
         let mut dirs = vec![
             moviebox_tui::service::resolve_subtitle_dir(),
-            std::env::temp_dir().join("moviebox-tui/subs"),
+            std::env::temp_dir().join("vincymovie/subs"),
         ];
         if let Some(home) = dirs::home_dir() {
             let android_storage = home.join("storage/downloads/moviebox_subs");
@@ -51,11 +52,8 @@ fn purge_stale_subtitles() {
                 dirs.push(android_storage);
             }
         }
-
         for dir in dirs {
-            if dir.exists()
-                && let Ok(entries) = std::fs::read_dir(&dir)
-            {
+            if dir.exists() && let Ok(entries) = std::fs::read_dir(&dir) {
                 for entry in entries.flatten() {
                     if let Ok(metadata) = entry.metadata()
                         && let Ok(modified) = metadata.modified()
@@ -79,51 +77,41 @@ fn purge_stale_update_artifacts() {
 }
 
 impl Drop for TerminalGuard {
-    fn drop(&mut self) {
-        restore_terminal();
-    }
+    fn drop(&mut self) { restore_terminal(); }
 }
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     #[cfg(all(target_arch = "aarch64", target_os = "linux"))]
-    {
-        core::hint::black_box(__bionic_tls_align_reference as *const ());
-    }
+    { core::hint::black_box(__bionic_tls_align_reference as *const ()); }
+
     let args: Vec<String> = std::env::args().collect();
     if args.iter().any(|arg| arg == "--help" || arg == "-h") {
-        println!("moviebox-tui {}", env!("CARGO_PKG_VERSION"));
-        println!("A terminal client for finding and streaming movies, TV shows, and anime.\n");
+        println!("Vincymovie {}", env!("CARGO_PKG_VERSION"));
+        println!("A desktop-friendly terminal app for finding movies, TV shows, and live TV.\n");
         println!("USAGE:");
-        println!("    moviebox-tui [OPTIONS]\n");
+        println!("    vincymovie [OPTIONS]\n");
         println!("OPTIONS:");
         println!("    -h, --help           Print help information");
         println!("    -v, -V, --version    Print version information\n");
         println!("ENVIRONMENT VARIABLES:");
         println!("    MOVIEBOX_LOG            Log level (off, error, warn, info, debug, trace)");
         println!("    MOVIEBOX_THEME          Theme name (e.g. catppuccin, dracula, nord, etc.)");
-        println!("    MOVIEBOX_PLAYER         Preferred player (mpv, iina, vlc, android)");
+        println!("    MOVIEBOX_PLAYER         Preferred local player (mpv, iina, vlc, android)");
         println!("    MOVIEBOX_MPV_PATH       Custom mpv binary path");
-        println!("    MOVIEBOX_VLC_PATH       Custom vlc binary path");
+        println!("    MOVIEBOX_VLC_PATH       Custom VLC binary path");
         println!("    MOVIEBOX_IINA_PATH      Custom iina-cli binary path");
-        println!("    MOVIEBOX_FOURKHDHUB_URL Custom 4KHDHub base URL");
         println!("    MOVIEBOX_NO_IMAGE       Disable poster image queries (1/true)");
-        println!(
-            "    MOVIEBOX_IMAGE_PROTOCOL Force graphics protocol (kitty, sixel, iterm2, none)"
-        );
+        println!("    MOVIEBOX_IMAGE_PROTOCOL Force graphics protocol (kitty, sixel, iterm2, none)");
         println!("    MOVIEBOX_CELL_SIZE      Override terminal cell size as WxH (e.g. 10x20)");
         return Ok(());
     }
-    if args
-        .iter()
-        .any(|arg| arg == "--version" || arg == "-v" || arg == "-V")
-    {
-        println!("moviebox-tui {}", env!("CARGO_PKG_VERSION"));
+    if args.iter().any(|arg| arg == "--version" || arg == "-v" || arg == "-V") {
+        println!("Vincymovie {}", env!("CARGO_PKG_VERSION"));
         return Ok(());
     }
 
     moviebox_tui::logging::init();
-
     std::panic::set_hook(Box::new(|info| {
         log::error!("panic: {info}");
         restore_terminal();
@@ -131,8 +119,9 @@ async fn main() -> std::io::Result<()> {
     }));
 
     let stdout = std::io::stdout();
-    let backend =
-        ratatui::backend::CrosstermBackend::new(std::io::BufWriter::with_capacity(65536, stdout));
+    let backend = ratatui::backend::CrosstermBackend::new(
+        std::io::BufWriter::with_capacity(65536, stdout),
+    );
     let mut terminal = ratatui::Terminal::new(backend)?;
     crossterm::terminal::enable_raw_mode()?;
     let _guard = TerminalGuard;
@@ -146,8 +135,8 @@ async fn main() -> std::io::Result<()> {
         std::io::stdout(),
         crossterm::event::PushKeyboardEnhancementFlags(
             crossterm::event::KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES
-                | crossterm::event::KeyboardEnhancementFlags::REPORT_EVENT_TYPES
-        )
+                | crossterm::event::KeyboardEnhancementFlags::REPORT_EVENT_TYPES,
+        ),
     );
 
     moviebox_tui::cache::clean_old_cache_background();
